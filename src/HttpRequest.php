@@ -27,6 +27,9 @@ class HttpRequest
     {
         $this->_response = $response;
         $this->_input = $input;
+        //获取请求方式
+        $request_method = isset($_SERVER['REQUEST_METHOD']) ? strtolower($_SERVER['REQUEST_METHOD']) : '';
+        $this->setRequestMethod($request_method);
     }
 
     public function setData($data)
@@ -71,7 +74,11 @@ class HttpRequest
      */
     public function setResponse()
     {
-        $this->_response->getDriver()->setResponse($this->_response->getDriver()->output($this->data));
+        $this->_response->getDriver()
+            ->setResponse(
+                $this->_response->getDriver()
+                    ->output($this->data)
+            );
 
         return $this->_response->getDriver();
     }
@@ -82,10 +89,14 @@ class HttpRequest
      */
     public function send()
     {
-        $this->_response->getDriver()->setResponse($this->_response->getDriver()->output($this->data))->send();
+        $this->_response->getDriver()
+            ->setResponse(
+                $this->_response->getDriver()
+                    ->output($this->data)
+            )->send();
     }
 
-    /**
+    /**x
      * 当前请求 HTTP_CONTENT_TYPE
      * @access public
      * @return string
@@ -151,7 +162,14 @@ class HttpRequest
 
     public function setQueryParam()
     {
-        $this->queryParam = array_merge($this->get(),$this->post(),$this->file(),$this->server(),$this->cookie(),$this->env());
+        $this->queryParam = array_merge(
+            $this->get(),
+            $this->post(),
+            $this->file(),
+            $this->server(),
+            $this->cookie(),
+            $this->env()
+        );
         return $this;
     }
 
