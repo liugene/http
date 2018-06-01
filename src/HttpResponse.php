@@ -19,7 +19,7 @@ class HttpResponse
 
     }
 
-    public function send()
+    public function send($return = false)
     {
         $status_header = 'HTTP/1.1 ' . $this->status . ' ' . Code::getStatusCodeMsg($this->status);
         if(!headers_sent()){
@@ -29,6 +29,7 @@ class HttpResponse
             //设置header 头类型
             header('Content-type: ' . $this->content_type);
         }
+        if($return) return $this->response;
         echo $this->response;
         if (function_exists('fastcgi_finish_request')) {
             // 提高页面响应

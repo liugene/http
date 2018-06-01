@@ -85,15 +85,23 @@ class HttpRequest
 
     /**
      * 响应请求输出结果
+     * @param $return
      * @return $this->_request_http_accept
      */
-    public function send()
+    public function send($return = false)
     {
+        if($return){
+            return $this->_response->getDriver()
+                ->setResponse(
+                    $this->_response->getDriver()
+                        ->output($this->data)
+                )->send($return);
+        }
         $this->_response->getDriver()
             ->setResponse(
                 $this->_response->getDriver()
                     ->output($this->data)
-            )->send();
+            )->send($return);
     }
 
     /**x
