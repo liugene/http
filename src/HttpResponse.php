@@ -2,16 +2,41 @@
 
 namespace linkphp\http;
 
+use linkphp\http\response\View;
+
 class HttpResponse
 {
 
-    private $status = 200;
+    protected $status = 200;
 
     protected $content_type;
 
-    private $response;
+    protected $response;
 
-    private $header = [];
+    protected $header = [];
+
+    protected $options = [];
+
+    protected $charset = 'utf-8';
+
+    /**
+     * 构造函数
+     * @access   public
+     * @param mixed $data    输出数据
+     * @param int   $status
+     * @param array $header
+     * @param array $options 输出参数
+     */
+    public function __construct($data = '', $status = 200, array $header = [], $options = [])
+    {
+        $this->setResponse($data);
+        if (!empty($options)) {
+            $this->options = array_merge($this->options, $options);
+        }
+        $this->contentType($this->content_type, $this->charset);
+        $this->header = array_merge($this->header, $header);
+        $this->status   = $status;
+    }
 
     public function getResponse()
     {
@@ -19,8 +44,45 @@ class HttpResponse
 
     }
 
+    /**
+     * 页面输出类型
+     * @param string $contentType 输出类型
+     * @param string $charset     输出编码
+     * @return $this
+     */
+    public function contentType($contentType, $charset = 'utf-8')
+    {
+        $this->header['Content-Type'] = $contentType . '; charset=' . $charset;
+        return $this;
+    }
+
+    /**
+     * 创建Response对象
+     * @access public
+     * @param mixed  $data    输出数据
+     * @param string $type    输出类型
+     * @param int    $code
+     * @param array  $header
+     * @param array  $options 输出参数
+     * @return View
+     */
+    public function create($data = '', $type = '', $code = 200, array $header = [], $options = [])
+    {
+        $type = empty($type) ? 'null' : strtolower($type);
+
+        $class = false !== strpos($type, '\\') ? $type : '\\linkphp\\http\\response\\' . ucfirst($type);
+        if (class_exists($class)) {
+            $response = new $class($data, $code, $header, $options);
+        } else {
+            $response = new static($data, $code, $header, $options);
+        }
+
+        return $response;
+    }
+
     public function send($return = false)
     {
+        if($return) return $this->response;
         $status_header = 'HTTP/1.1 ' . $this->status . ' ' . Code::getStatusCodeMsg($this->status);
         if(!headers_sent()){
             //设置header头状态
@@ -29,7 +91,6 @@ class HttpResponse
             //设置header 头类型
             header('Content-type: ' . $this->content_type);
         }
-        if($return) return $this->response;
         echo $this->response;
         if (function_exists('fastcgi_finish_request')) {
             // 提高页面响应
@@ -44,15 +105,21 @@ class HttpResponse
         return $this;
     }
 
-    public function setContentType($type)
-    {
-        $this->content_type = $type;
-        return $this;
-    }
-
     public function setResponse($response)
     {
         $this->response = $response;
+        return $this;
+    }
+
+    public function setCharset($charset)
+    {
+        $this->charset = $charset;
+        return $this;
+    }
+
+    public function setContentType($type)
+    {
+        $this->content_type = $type;
         return $this;
     }
 
