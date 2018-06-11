@@ -5,21 +5,50 @@ namespace linkphp\http;
 class HttpRequest
 {
 
-    private $cmd;
-
-    private $cmd_param = [];
-
+    /**
+     * @var HttpResponse 响应对象
+     */
     private $_response;
 
+    /**
+     * @var Input 参数接收对象
+     */
     private $_input;
 
+    /**
+     * @var array 参数
+     */
     private $queryParam = [];
 
-    //请求方法
+    /**
+     * @var string 请求方法
+     */
     private $request_method;
 
-    //数据
+    /**
+     * @var array 数据
+     */
     private $data;
+
+    /**
+     * @var string 请求根目录
+     */
+    private $root;
+
+    /**
+     * @var string 请求文件路径
+     */
+    private $baseFile;
+
+    /**
+     * @var string 请求URL
+     */
+    private $url;
+
+    /**
+     * @var string 请求域名
+     */
+    private $domain;
 
     private $request_http_accept = 'json';
 
@@ -50,6 +79,10 @@ class HttpRequest
         $this->setRequestMethod($request_method);
     }
 
+    /**
+     * @var string|array|object 设置响应数据
+     * @return $this
+     */
     public function setData($data)
     {
         $this->data = $data;
@@ -348,6 +381,146 @@ class HttpRequest
         return strpos(PHP_SAPI, 'cgi') === 0;
     }
 
+    /**
+     * 设置或获取URL访问根地址
+     * @access public
+     * @param string $url URL地址
+     * @return string
+     */
+    public function root($url = null)
+    {
+        if (!is_null($url) && true !== $url) {
+            $this->root = $url;
+            return $this;
+        } elseif (!$this->root) {
+            $file = $this->baseFile();
+            if ($file && 0 !== strpos($this->url(), $file)) {
+                $file = str_replace('\\', '/', dirname($file));
+            }
+            $this->root = rtrim($file, '/');
+        }
+        return true === $url ? $this->domain() . $this->root : $this->root;
+    }
+
+    /**
+     * 设置或获取当前执行的文件 SCRIPT_NAME
+     * @access public
+     * @param string $file 当前执行的文件
+     * @return string
+     */
+    public function baseFile($file = null)
+    {
+        if (!is_null($file) && true !== $file) {
+            $this->baseFile = $file;
+            return $this;
+        } elseif (!$this->baseFile) {
+            $url = '';
+            if (!IS_CLI) {
+                $script_name = basename($_SERVER['SCRIPT_FILENAME']);
+                if (basename($_SERVER['SCRIPT_NAME']) === $script_name) {
+                    $url = $_SERVER['SCRIPT_NAME'];
+                } elseif (basename($_SERVER['PHP_SELF']) === $script_name) {
+                    $url = $_SERVER['PHP_SELF'];
+                } elseif (isset($_SERVER['ORIG_SCRIPT_NAME']) && basename($_SERVER['ORIG_SCRIPT_NAME']) === $script_name) {
+                    $url = $_SERVER['ORIG_SCRIPT_NAME'];
+                } elseif (($pos = strpos($_SERVER['PHP_SELF'], '/' . $script_name)) !== false) {
+                    $url = substr($_SERVER['SCRIPT_NAME'], 0, $pos) . '/' . $script_name;
+                } elseif (isset($_SERVER['DOCUMENT_ROOT']) && strpos($_SERVER['SCRIPT_FILENAME'], $_SERVER['DOCUMENT_ROOT']) === 0) {
+                    $url = str_replace('\\', '/', str_replace($_SERVER['DOCUMENT_ROOT'], '', $_SERVER['SCRIPT_FILENAME']));
+                }
+            }
+            $this->baseFile = $url;
+        }
+        return true === $file ? $this->domain() . $this->baseFile : $this->baseFile;
+    }
+
+    /**
+     * 设置或获取当前完整URL 包括QUERY_STRING
+     * @access public
+     * @param string|true $url URL地址 true 带域名获取
+     * @return string
+     */
+    public function url($url = null)
+    {
+        if (!is_null($url) && true !== $url) {
+            $this->url = $url;
+            return $this;
+        } elseif (!$this->url) {
+            if (IS_CLI) {
+                $this->url = isset($_SERVER['argv'][1]) ? $_SERVER['argv'][1] : '';
+            } elseif (isset($_SERVER['HTTP_X_REWRITE_URL'])) {
+                $this->url = $_SERVER['HTTP_X_REWRITE_URL'];
+            } elseif (isset($_SERVER['REQUEST_URI'])) {
+                $this->url = $_SERVER['REQUEST_URI'];
+            } elseif (isset($_SERVER['ORIG_PATH_INFO'])) {
+                $this->url = $_SERVER['ORIG_PATH_INFO'] . (!empty($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : '');
+            } else {
+                $this->url = '';
+            }
+        }
+        return true === $url ? $this->domain() . $this->url : $this->url;
+    }
+
+    /**
+     * 设置或获取当前包含协议的域名
+     * @access public
+     * @param string $domain 域名
+     * @return string
+     */
+    public function domain($domain = null)
+    {
+        if (!is_null($domain)) {
+            $this->domain = $domain;
+            return $this;
+        } elseif (!$this->domain) {
+            $this->domain = $this->scheme() . '://' . $this->host();
+        }
+        return $this->domain;
+    }
+
+    /**
+     * 当前URL地址中的scheme参数
+     * @access public
+     * @return string
+     */
+    public function scheme()
+    {
+        return $this->isSsl() ? 'https' : 'http';
+    }
+
+    /**
+     * 当前是否ssl
+     * @access public
+     * @return bool
+     */
+    public function isSsl()
+    {
+        $server = array_merge($_SERVER, $this->server());
+        if (isset($server['HTTPS']) && ('1' == $server['HTTPS'] || 'on' == strtolower($server['HTTPS']))) {
+            return true;
+        } elseif (isset($server['REQUEST_SCHEME']) && 'https' == $server['REQUEST_SCHEME']) {
+            return true;
+        } elseif (isset($server['SERVER_PORT']) && ('443' == $server['SERVER_PORT'])) {
+            return true;
+        } elseif (isset($server['HTTP_X_FORWARDED_PROTO']) && 'https' == $server['HTTP_X_FORWARDED_PROTO']) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 当前请求的host
+     * @access public
+     * @return string
+     */
+    public function host()
+    {
+        if (isset($_SERVER['HTTP_X_REAL_HOST'])) {
+            return $_SERVER['HTTP_X_REAL_HOST'];
+        }
+        return $this->server('HTTP_HOST');
+    }
+
     public function setQueryParam()
     {
         $this->queryParam = array_merge(
@@ -430,18 +603,6 @@ class HttpRequest
             $this->setQueryParam();
         }
         return $key=='' ? $this->queryParam : $this->queryParam[$key];
-    }
-
-    public function setCmdParam($command)
-    {
-        if(is_array($command) && count($command)>1){
-            $this->cmd = $command[1];
-        }
-    }
-
-    public function cmd($key)
-    {
-        return $this->cmd_param[$key];
     }
 
     // 请求对象
