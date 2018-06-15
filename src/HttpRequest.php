@@ -590,7 +590,7 @@ class HttpRequest
         return $this->_input->getInput($filter);
     }
 
-    public function input($key = '',$filter)
+    public function input($key = '',$filter = '')
     {
         if ($pos = strpos($key, '.')) {
             // 指定参数来源
@@ -602,7 +602,12 @@ class HttpRequest
         if(empty($this->queryParam)){
             $this->setQueryParam();
         }
-        return $key=='' ? $this->queryParam : $this->queryParam[$key];
+
+        if(!$key){
+            return $this->queryParam;
+        }
+
+        return isset($this->queryParam[$key]) ? $this->queryParam[$key] : false;
     }
 
     // 请求对象
