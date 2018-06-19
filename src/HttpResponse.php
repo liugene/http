@@ -66,9 +66,9 @@ class HttpResponse
      * @param array  $options 输出参数
      * @return View
      */
-    public function create($data = '', $type = '', $code = 200, array $header = [], $options = [])
+    public static function create($data = '', $type = '', $code = 200, array $header = [], $options = [])
     {
-        $type = empty($type) ? 'null' : strtolower($type);
+        $type = empty($type) ? 'json' : strtolower($type);
 
         $class = false !== strpos($type, '\\') ? $type : '\\linkphp\\http\\response\\' . ucfirst($type);
         if (class_exists($class)) {
@@ -83,13 +83,16 @@ class HttpResponse
     public function send($return = false)
     {
         if($return) return $this->response;
+        $this->header('Content-Type', $this->content_type . '; charset=utf-8');
         $status_header = 'HTTP/1.1 ' . $this->status . ' ' . Code::getStatusCodeMsg($this->status);
         if(!headers_sent()){
             //设置header头状态
             header($status_header);
             http_response_code($this->status);
             //设置header 头类型
-            header('Content-type: ' . $this->content_type);
+            foreach ($this->header as $type => $value){
+                header($type . ': ' . $value);
+            }
         }
         echo $this->response;
         if (function_exists('fastcgi_finish_request')) {

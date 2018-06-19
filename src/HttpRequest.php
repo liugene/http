@@ -142,11 +142,17 @@ class HttpRequest
     public function send($return = false)
     {
         if($return){
+            if($this->data instanceof HttpResponse){
+                return $this->data->send(true);
+            }
             return $this->_response->getDriver()
                 ->setResponse(
                     $this->_response->getDriver()
                         ->output($this->data)
                 )->send($return);
+        }
+        if($this->data instanceof HttpResponse){
+            $this->data->send();
         }
         $this->_response->getDriver()
             ->setResponse(
@@ -623,7 +629,7 @@ class HttpRequest
         $_FILES  = isset($requester->files) ? $requester->files : [];
         $_COOKIE = isset($requester->cookie) ? $requester->cookie : [];
         $_SERVER = isset($requester->server) ? $requester->server : [];
-        $this->header = isset($requester->header) ? $requester->header : [];
+        $this->header(isset($requester->header) ? $requester->header : []);
     }
 
     // 返回原始的HTTP包体

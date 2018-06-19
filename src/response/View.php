@@ -6,7 +6,7 @@ use linkphp\http\HttpResponse;
 class View extends HttpResponse
 {
 
-    protected $content_type = 'application/html';
+    protected $content_type = 'text/html';
 
     /**
      * 处理数据

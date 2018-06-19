@@ -40,7 +40,7 @@ class Input
 
     protected $input  = [];
 
-    private $filter;
+    private $filter = 'htmlspecialchars,stripslashes,htmlentities,strip_tags';
 
     /**
      * @var HttpRequest
