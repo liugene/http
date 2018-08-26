@@ -87,7 +87,13 @@ class Input
             $this->param      = [];
             return $this->server = array_merge($this->server, $key);
         }
-        return $key=='' ? $this->server : $this->server[$key];
+        if($key==''){
+            return $this->server;
+        }
+        if(isset($this->server[$key])){
+            return $this->server[$key];
+        }
+        return null;
     }
 
     public function file($key='')

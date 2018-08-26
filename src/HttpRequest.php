@@ -147,8 +147,7 @@ class HttpRequest
             }
             return $this->_response->getDriver()
                 ->setResponse(
-                    $this->_response->getDriver()
-                        ->output($this->data)
+                    $this->data
                 )->send($return);
         }
         if($this->data instanceof HttpResponse){
@@ -156,8 +155,7 @@ class HttpRequest
         }
         $this->_response->getDriver()
             ->setResponse(
-                $this->_response->getDriver()
-                    ->output($this->data)
+                $this->data
             )->send($return);
     }
 
@@ -179,6 +177,19 @@ class HttpRequest
         } else {
             return false;
         }
+    }
+
+    /**
+     * 当前是否Ajax请求
+     * @access public
+     * @param bool $ajax  true 获取原始ajax请求
+     * @return bool
+     */
+    public function isAjax($ajax = false)
+    {
+        $value  = $this->server('HTTP_X_REQUESTED_WITH');
+        $result = ('xmlhttprequest' == $value) ? true : false;
+        return $result;
     }
 
     /**
@@ -624,12 +635,13 @@ class HttpRequest
     {
         $this->_requester = $requester;
         // 重置数据
-        $_GET    = isset($requester->get) ? $requester->get : [];
-        $_POST   = isset($requester->post) ? $requester->post : [];
-        $_FILES  = isset($requester->files) ? $requester->files : [];
-        $_COOKIE = isset($requester->cookie) ? $requester->cookie : [];
-        $_SERVER = isset($requester->server) ? $requester->server : [];
+        $this->get(isset($requester->get) ? $requester->get : []);
+        $this->post(isset($requester->post) ? $requester->post : []);
+        $this->file(isset($requester->files) ? $requester->files : []);
+        $this->cookie(isset($requester->cookie) ? $requester->cookie : []);
+        $this->server(isset($requester->server) ? $requester->server : []);
         $this->header(isset($requester->header) ? $requester->header : []);
+        return $this;
     }
 
     // 返回原始的HTTP包体
