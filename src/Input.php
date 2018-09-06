@@ -63,7 +63,7 @@ class Input
             $this->param      = [];
             return $this->get = array_merge($this->get, $key);
         }
-        return $key=='' ? $this->param($this->get,$filter) : $this->param($this->get[$key],$filter);
+        return $key=='' ? $this->param($this->get,$filter) : $this->param(isset($this->get[$key]) ? $this->get[$key] : '',$filter);
     }
 
     public function post($key='',$filter)
@@ -75,7 +75,7 @@ class Input
             $this->param      = [];
             return $this->post = array_merge($this->post, $key);
         }
-        return $key=='' ? $this->param($this->post,$filter) : $this->param($this->post[$key],$filter);
+        return $key=='' ? $this->param($this->post,$filter) : $this->param(isset($this->post[$key]) ? $this->post[$key] : '',$filter);
     }
 
     public function server($key='')
@@ -226,7 +226,7 @@ class Input
             $this->param          = [];
             return $this->request = array_merge($this->request, $key);
         }
-        return $key =='' ? $this->param($this->request,$filter) : $this->param($this->request[$key],$filter);
+        return $key =='' ? $this->param($this->request,$filter) : $this->param(isset($this->request[$key]) ? $this->request[$key] : '',$filter);
     }
 
     /**
@@ -244,7 +244,7 @@ class Input
         if (is_array($key)) {
             return $this->session = array_merge($this->session, $key);
         }
-        return $key =='' ? $this->param($this->session,$filter) : $this->param($this->session[$key],$filter);
+        return $key =='' ? $this->param($this->session,$filter) : $this->param(isset($this->session[$key]) ? $this->session[$key] : '',$filter);
     }
 
     public function getInput($filter)
@@ -254,6 +254,9 @@ class Input
 
     public function param($data,$filters)
     {
+        if($data == '') {
+            return null;
+        }
         $filter = $this->getFilter($filters);
         if (is_array($data)) {
             array_walk_recursive($data, [$this, 'filterValue'], $filter);
