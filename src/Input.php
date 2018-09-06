@@ -294,6 +294,10 @@ class Input
                 // 调用函数或者方法过滤
                 $value = call_user_func($filter, $value);
             }
+
+            if(is_string($filter)){
+                $value = call_user_func($filter, $value);
+            }
         }
         return $this->filterExp($value);
     }
